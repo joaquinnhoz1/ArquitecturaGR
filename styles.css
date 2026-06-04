@@ -1452,16 +1452,20 @@ image-slot::part(ring) {
   .nav__links, .nav__cta { display: none; }
   .nav__burger { display: flex; }
 
-  /* Logo centrado en mobile — nav vuelve a fixed para superponerse sobre el hero */
+  /* Eliminar barra horizontal en mobile — solo burger flotante sin fondo */
   .nav {
-    justify-content: center;
+    justify-content: flex-end;
     position: fixed;
   }
-  .nav__burger {
-    position: absolute;
-    right: clamp(1.2rem, 5vw, 3.5rem);
+  /* Anular el estado "solid" (fondo con blur) en mobile */
+  .nav[data-solid="true"] {
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
   }
-  .nav__logo-img { height: 68px; }
+  .nav__logo { display: none; }
+  .nav__burger { position: static; }
 }
 
 /* ===========================================================================
