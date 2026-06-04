@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Descargador Portfolio — arq.estudio.gr</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Arial,sans-serif;background:#1a1a2e;color:#eee;padding:20px;min-height:100vh}
+  h1{color:#4fc3f7;font-size:1.4em;margin-bottom:4px}
+  .sub{color:#90caf9;font-size:.85em;margin-bottom:20px}
+  .card{background:#16213e;border-radius:10px;padding:20px;margin-bottom:16px;border:1px solid #0f3460}
+  .card h2{color:#81d4fa;font-size:1em;margin-bottom:10px}
+  button{background:#0288d1;color:#fff;border:none;padding:10px 22px;border-radius:6px;cursor:pointer;font-size:.95em;font-weight:bold;transition:.2s}
+  button:hover{background:#0277bd}
+  button:disabled{background:#555;cursor:not-allowed}
+  #log{background:#0d1117;border-radius:8px;padding:14px;height:340px;overflow-y:auto;font-size:.78em;font-family:monospace;border:1px solid #30363d}
+  .ok{color:#4caf50}.err{color:#f44336}.info{color:#64b5f6}.warn{color:#ffb74d}.proj{color:#ce93d8;font-weight:bold}
+  #progress-bar{height:8px;background:#1565c0;border-radius:4px;margin:10px 0;transition:width .3s}
+  #progress-wrap{background:#0d1117;border-radius:4px;height:8px;overflow:hidden;margin:10px 0}
+  #stats{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}
+  .stat{background:#0f3460;border-radius:6px;padding:8px 14px;text-align:center}
+  .stat .n{font-size:1.6em;font-weight:bold;color:#4fc3f7}
+  .stat .l{font-size:.75em;color:#90caf9}
+  #step2{display:none}
+  .instruct{background:#1b2a1b;border:1px solid #2e7d32;border-radius:8px;padding:14px;margin-bottom:16px;font-size:.85em;line-height:1.6}
+  .instruct strong{color:#a5d6a7}
+  .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.75em;font-weight:bold;margin-left:6px}
+  .b-render{background:#7b1fa2;color:#fff}
+  .b-obra{background:#e65100;color:#fff}
+  .b-antes{background:#01579b;color:#fff}
+  .b-despues{background:#1b5e20;color:#fff}
+  .b-revisar{background:#37474f;color:#fff}
+</style>
+</head>
+<body>
+
+<h1>📐 Descargador Portfolio — arq.estudio.gr</h1>
+<p class="sub">Arquitecta Giannina Ricci · Daireaux, Buenos Aires · 86 publicaciones · 26 proyectos</p>
+
+<div class="instruct">
+  <strong>⚠️ Instrucciones — leer antes de comenzar:</strong><br>
+  1. Asegurate de estar <strong>logueada en Instagram</strong> en esta misma sesión de Chrome.<br>
+  2. Hacé clic en <strong>"Seleccionar carpeta Portfolio"</strong> y elegí la carpeta <code>Portfolio Arquitectura</code> en tu Escritorio.<br>
+  3. Chrome pedirá permiso para acceder a la carpeta — hacé clic en <strong>"Permitir"</strong>.<br>
+  4. Luego clic en <strong>"Iniciar descarga"</strong>. El proceso corre automáticamente (~10-15 min para 86 posts).<br>
+  5. Las imágenes se guardan directamente en las subcarpetas correctas con el nombre formato <code>Proyecto-Categoria-01.jpg</code>.<br>
+  <strong>No cierres esta pestaña ni navegues a otra hasta que termine.</strong>
+</div>
+
+<div class="card">
+  <h2>Paso 1 — Seleccionar carpeta destino</h2>
+  <button id="btnFolder">📁 Seleccionar carpeta "Portfolio Arquitectura"</button>
+  <span id="folderName" style="margin-left:12px;color:#90caf9;font-size:.85em"></span>
+</div>
+
+<div class="card" id="step2">
+  <h2>Paso 2 — Descargar imágenes</h2>
+  <button id="btnStart">⬇️ Iniciar descarga automática</button>
+  <button id="btnStop" style="margin-left:10px;background:#c62828;display:none">⏹ Detener</button>
+  <div id="progress-wrap"><div id="progress-bar" style="width:0%"></div></div>
+  <div id="stats">
+    <div class="stat"><div class="n" id="s-done">0</div><div class="l">Posts procesados</div></div>
+    <div class="stat"><div class="n" id="s-imgs">0</div><div class="l">Imágenes descargadas</div></div>
+    <div class="stat"><div class="n" id="s-skip">0</div><div class="l">Omitidas / errores</div></div>
+    <div class="stat"><div class="n" id="s-proj">0</div><div class="l">Proyectos con imágenes</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Log de actividad</h2>
+  <div id="log"></div>
+</div>
+
+<script>
+// ─── MAPA COMPLETO: post_id → {proyecto, carpeta_base, categoria} ─────────────
+const POST_MAP = {
+  'DYW7bO2gIG7': {proj:'01-Nuevo-Proyecto-Render-2026',   cat:'Render',  name:'NuevoProyecto'},
+  'DWFOH6SiWD-': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'DVLxlUXAFPO': {proj:'02-Reforma-Vivienda-2026',         cat:'Obra',    name:'ReformaVivienda2026'},
+  'DUmNhXejMGK': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'DUWlj9CgPlo': {proj:'02-Reforma-Vivienda-2026',         cat:'Obra',    name:'ReformaVivienda2026'},
+  'DUULVCEjMo3': {proj:'03-Reforma-Ampliacion-Entregada-2026', cat:'Despues', name:'ReformaAmpliacion2026'},
+  'DTjCjUSksU7': {proj:'03-Reforma-Ampliacion-Entregada-2026', cat:'Despues', name:'ReformaAmpliacion2026'},
+  'DTTtChcAG9Y': {proj:'03-Reforma-Ampliacion-Entregada-2026', cat:'Antes',   name:'ReformaAmpliacion2026'},
+  'DSRGQCAjFxx': {proj:'06-Estudio-GR-Apertura',           cat:'Despues', name:'EstudioGR'},
+  'DQuIlR8AInX': {proj:'02-Reforma-Vivienda-2026',         cat:'Antes',   name:'ReformaVivienda2026'},
+  'DPrOC42gHQF': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'DO1xGdHEpbO': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'DOB7qSPAClE': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'DN0_2_RwLUr': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'DKk9jHZsdUR': {proj:'05-Render-vs-Obra-2025',           cat:'Render',  name:'RenderVsObra2025'},
+  'DI38l7kOpv2': {proj:'04-PUMA-Energy-Vagnoni',           cat:'Despues', name:'PUMAVagnoni'},
+  'DDzKaguOq-D': {proj:'04-PUMA-Energy-Vagnoni',           cat:'Despues', name:'PUMAVagnoni'},
+  'C0_vNnUgU2O': {proj:'07-Casa-IH-Clasica-Neoclasica',    cat:'Render',  name:'CasaIH'},
+  'CxwenyaOgTD': {proj:'04-PUMA-Energy-Vagnoni',           cat:'Antes',   name:'PUMAVagnoni'},
+  'CqG_o4ROA_q': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CoLl5z8MM03': {proj:'08-Farmacia-Traverso',             cat:'Despues', name:'FarmaciaTraverso'},
+  'Cm1vVhyOMs3': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CmL-jbIAPmw': {proj:'07-Casa-IH-Clasica-Neoclasica',   cat:'Render',  name:'CasaIH'},
+  'CilkUPJuzTG': {proj:'12-Vivienda-Quincho-Urdampilleta', cat:'Obra',    name:'QuinchoUrdampilleta'},
+  'CgNeTtoIwQW': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'Cf-KRW-q3X2': {proj:'09-Procrear-Juana-Pirovano',      cat:'Obra',    name:'ProcrearJuana'},
+  'CfFdRhkOWlV': {proj:'10-Procrear-Milagros',            cat:'Obra',    name:'ProcrearMilagros'},
+  'Ce88kgouue2': {proj:'19-Vivienda-Minimalista',          cat:'Render',  name:'Minimalista'},
+  'Cezmk--oYaA': {proj:'09-Procrear-Juana-Pirovano',      cat:'Obra',    name:'ProcrearJuana'},
+  'CdqhY4VuU2S': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CbtVw8JOa-p': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CbOMYETLsaY': {proj:'09-Procrear-Juana-Pirovano',      cat:'Antes',   name:'ProcrearJuana'},
+  'CafyAt7Ogsh': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CaGQGSFqEAG': {proj:'20-Casa-Galpon-Ferroviario',       cat:'Render',  name:'CasaGalpon'},
+  'CZ0GeuRubGp': {proj:'12-Vivienda-Quincho-Urdampilleta', cat:'Obra',    name:'QuinchoUrdampilleta'},
+  'CZvBXDrutwj': {proj:'11-Procrear-Bicentenaria',        cat:'Render',  name:'ProcrearBicentenaria'},
+  'CZh_tsouKku': {proj:'13-Hotel-Daireaux-Restaurante',    cat:'Despues', name:'HotelDaireaux'},
+  'CZc7-bSuFW3': {proj:'11-Procrear-Bicentenaria',        cat:'Obra',    name:'ProcrearBicentenaria'},
+  'CZIQbLBugFL': {proj:'13-Hotel-Daireaux-Restaurante',    cat:'Despues', name:'HotelDaireaux'},
+  'CYjpQ3xrkmX': {proj:'10-Procrear-Milagros',            cat:'Render',  name:'ProcrearMilagros'},
+  'CWrFAeNL0VF': {proj:'09-Procrear-Juana-Pirovano',      cat:'Render',  name:'ProcrearJuana'},
+  'CWqmsnJrs1W': {proj:'09-Procrear-Juana-Pirovano',      cat:'Render',  name:'ProcrearJuana'},
+  'CWqM1s6LCL7': {proj:'09-Procrear-Juana-Pirovano',      cat:'Render',  name:'ProcrearJuana'},
+  'CV1dXw4rWMY': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CVvPGKJresZ': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CVvO--Jrq0e': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CSzb181rLwj': {proj:'17-Casa-Estilo-Industrial',        cat:'Render',  name:'CasaIndustrial'},
+  'CSzbdkELXY3': {proj:'17-Casa-Estilo-Industrial',        cat:'Render',  name:'CasaIndustrial'},
+  'CSzbIvMrxsK': {proj:'17-Casa-Estilo-Industrial',        cat:'Render',  name:'CasaIndustrial'},
+  'CPW_nJOh4tU': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CPW_hfcBUcr': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CPW_fSeBbkf': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CPHRJ6VBiWO': {proj:'18-Casa-Rural-Zona-Rural',         cat:'Render',  name:'CasaRural'},
+  'CPHRHlUhrZv': {proj:'18-Casa-Rural-Zona-Rural',         cat:'Render',  name:'CasaRural'},
+  'CPHRFa_h_WA': {proj:'18-Casa-Rural-Zona-Rural',         cat:'Render',  name:'CasaRural'},
+  'COOvFJlBDP0': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CNiS-TPhvG3': {proj:'12-Vivienda-Quincho-Urdampilleta', cat:'Render',  name:'QuinchoUrdampilleta'},
+  'CNiSEIlBeuB': {proj:'12-Vivienda-Quincho-Urdampilleta', cat:'Render',  name:'QuinchoUrdampilleta'},
+  'CMvbtCuh7DC': {proj:'21-Casa-Campo-Contemporanea',       cat:'Render',  name:'CasaCampo'},
+  'CIysH3NhYJD': {proj:'14-Reforma-Cocina',                cat:'Antes',   name:'ReformaCocina'},
+  'CGqqoAuHkDE': {proj:'21-Casa-Campo-Contemporanea',       cat:'Render',  name:'CasaCampo'},
+  'CGC8IDZnTbe': {proj:'24-Reforma-Living',                cat:'Render',  name:'ReformaLiving'},
+  'CFfe16an8It': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CFfew1Knwdf': {proj:'15-Vinoteca-Refaccion',            cat:'Render',  name:'Vinoteca'},
+  'CFfesmzHhM-': {proj:'15-Vinoteca-Refaccion',            cat:'Render',  name:'Vinoteca'},
+  'CEsRLZNHJoK': {proj:'15-Vinoteca-Refaccion',            cat:'Obra',    name:'Vinoteca'},
+  'CEsRI1RnkT0': {proj:'15-Vinoteca-Refaccion',            cat:'Obra',    name:'Vinoteca'},
+  'CEsRFlYHQBf': {proj:'15-Vinoteca-Refaccion',            cat:'Obra',    name:'Vinoteca'},
+  'CEaPYu6nuA4': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CEaOq8KHBeN': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CEaNmRIHdbl': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CDwa-eDH_Tn': {proj:'16-Casa-Daireaux-Rural',           cat:'Render',  name:'CasaDaireaux'},
+  'CDwa66sHknV': {proj:'16-Casa-Daireaux-Rural',           cat:'Render',  name:'CasaDaireaux'},
+  'CDwa3QDnSrL': {proj:'16-Casa-Daireaux-Rural',           cat:'Render',  name:'CasaDaireaux'},
+  'CDcIKuDn0On': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CDPt8J7nWXd': {proj:'16-Casa-Daireaux-Rural',           cat:'Render',  name:'CasaDaireaux'},
+  'CDCeXvAgiyv': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CCn_vwdH9LE': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CByZuz2HXWl': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'CAOXPE1H0tc': {proj:'26-Planeamiento-Urbano',           cat:'Render',  name:'PlaneamientoUrbano'},
+  'B-iNosoH3g5': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'B-F4L-mHOwH': {proj:'25-Ampliacion-Galeria-Parrilla',   cat:'Render',  name:'AmpliacionGaleria'},
+  'B97WQ3MH6wZ': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'B90D1G2n2Ls': {proj:'22-Proyecto-Oficinas',             cat:'Render',  name:'Oficinas'},
+  'B9jvIldnK_K': {proj:'00-Posts-No-Proyecto',             cat:'Revisar', name:'NoProyecto'},
+  'B9aDcATAFSn': {proj:'23-Proyecto-Edificio-Parasoles',   cat:'Render',  name:'EdificioParasoles'},
+};
+
+const ALL_IDS = Object.keys(POST_MAP);
+const TOTAL = ALL_IDS.length;
+
+// Contadores por proyecto y categoría para numerar archivos
+const counters = {};
+function getCounter(proj, cat) {
+  const key = proj + '|' + cat;
+  counters[key] = (counters[key] || 0) + 1;
+  return String(counters[key]).padStart(2, '0');
+}
+
+let rootDirHandle = null;
+let dirHandles = {};
+let running = false;
+let donePosts = 0, doneImgs = 0, skipCount = 0;
+const projsWithImgs = new Set();
+
+function log(msg, cls='info') {
+  const d = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = cls;
+  line.textContent = new Date().toLocaleTimeString('es') + ' ' + msg;
+  d.appendChild(line);
+  d.scrollTop = d.scrollHeight;
+}
+
+function updateStats() {
+  document.getElementById('s-done').textContent = donePosts;
+  document.getElementById('s-imgs').textContent = doneImgs;
+  document.getElementById('s-skip').textContent = skipCount;
+  document.getElementById('s-proj').textContent = projsWithImgs.size;
+  document.getElementById('progress-bar').style.width = Math.round(donePosts/TOTAL*100) + '%';
+}
+
+// Obtener o crear handle de subdirectorio
+async function getDirHandle(projFolder, cat) {
+  const key = projFolder + '/' + cat;
+  if (dirHandles[key]) return dirHandles[key];
+  try {
+    const projH = await rootDirHandle.getDirectoryHandle(projFolder, {create:true});
+    const catH  = await projH.getDirectoryHandle(cat, {create:true});
+    dirHandles[key] = catH;
+    return catH;
+  } catch(e) {
+    log('Error creando carpeta ' + key + ': ' + e.message, 'err');
+    return null;
+  }
+}
+
+// Guardar blob en archivo
+async function saveFile(dirH, filename, blob) {
+  try {
+    const fh = await dirH.getFileHandle(filename, {create:true});
+    const writable = await fh.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return true;
+  } catch(e) {
+    log('Error guardando ' + filename + ': ' + e.message, 'err');
+    return false;
+  }
+}
+
+// Extraer URLs de imagen del HTML de un post
+function extractImages(html, postId) {
+  const imgs = [];
+  
+  // Buscar display_url en el JSON interno (imágenes de alta resolución)
+  const displayUrls = [...html.matchAll(/"display_url":"(https:[^"]+)"/g)];
+  for (const m of displayUrls) {
+    const url = m[1].replace(/\\u0026/g,'&').replace(/\\/g,'');
+    if (!imgs.includes(url)) imgs.push(url);
+  }
+  
+  // Fallback: og:image
+  if (imgs.length === 0) {
+    const ogImg = html.match(/property="og:image" content="([^"]+)"/);
+    if (ogImg) imgs.push(ogImg[1]);
+  }
+  
+  return imgs;
+}
+
+// Procesar un post
+async function processPost(postId) {
+  const info = POST_MAP[postId];
+  const url = 'https://www.instagram.com/arq.estudio.gr/p/' + postId + '/';
+  
+  try {
+    const resp = await fetch(url, {credentials:'include', headers:{'Accept':'text/html'}});
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const html = await resp.text();
+    
+    const imageUrls = extractImages(html, postId);
+    if (imageUrls.length === 0) {
+      log('⚠ ' + postId + ' — sin imágenes detectadas', 'warn');
+      skipCount++;
+      return;
+    }
+    
+    const dirH = await getDirHandle(info.proj, info.cat);
+    if (!dirH) { skipCount++; return; }
+    
+    let saved = 0;
+    for (const imgUrl of imageUrls) {
+      try {
+        const imgResp = await fetch(imgUrl, {credentials:'include'});
+        if (!imgResp.ok) throw new Error('HTTP ' + imgResp.status);
+        const blob = await imgResp.blob();
+        
+        const ext = imgUrl.includes('.webp') ? 'webp' : 'jpg';
+        const num = getCounter(info.proj, info.cat);
+        const filename = info.name + '-' + info.cat + '-' + num + '.' + ext;
+        
+        const ok = await saveFile(dirH, filename, blob);
+        if (ok) {
+          saved++;
+          doneImgs++;
+          projsWithImgs.add(info.proj);
+          log('✓ ' + filename, 'ok');
+        } else {
+          skipCount++;
+        }
+      } catch(e) {
+        log('Error imagen en ' + postId + ': ' + e.message, 'err');
+        skipCount++;
+      }
+      await new Promise(r => setTimeout(r, 300));
+    }
+    
+    log(info.proj + ' / ' + info.cat + ' — ' + saved + ' img(s) de post ' + postId, 'proj');
+    
+  } catch(e) {
+    log('Error en post ' + postId + ': ' + e.message, 'err');
+    skipCount++;
+  }
+}
+
+// ─── BOTONES ──────────────────────────────────────────────────────────────────
+document.getElementById('btnFolder').addEventListener('click', async () => {
+  try {
+    rootDirHandle = await window.showDirectoryPicker({mode:'readwrite', startIn:'desktop'});
+    document.getElementById('folderName').textContent = '✅ Carpeta: ' + rootDirHandle.name;
+    document.getElementById('step2').style.display = 'block';
+    log('Carpeta seleccionada: ' + rootDirHandle.name, 'ok');
+  } catch(e) {
+    if (e.name !== 'AbortError') log('Error seleccionando carpeta: ' + e.message, 'err');
+  }
+});
+
+document.getElementById('btnStart').addEventListener('click', async () => {
+  if (running) return;
+  if (!rootDirHandle) { log('Primero seleccioná la carpeta', 'warn'); return; }
+  
+  running = true;
+  donePosts = 0; doneImgs = 0; skipCount = 0;
+  document.getElementById('btnStart').disabled = true;
+  document.getElementById('btnStop').style.display = 'inline-block';
+  log('=== INICIANDO DESCARGA DE ' + TOTAL + ' POSTS ===', 'proj');
+  
+  for (const postId of ALL_IDS) {
+    if (!running) { log('=== DETENIDO POR USUARIO ===', 'warn'); break; }
+    await processPost(postId);
+    donePosts++;
+    updateStats();
+    await new Promise(r => setTimeout(r, 400));
+  }
+  
+  running = false;
+  document.getElementById('btnStart').disabled = false;
+  document.getElementById('btnStop').style.display = 'none';
+  log('=== PROCESO COMPLETADO ===', 'proj');
+  log('Posts: ' + donePosts + ' | Imágenes: ' + doneImgs + ' | Errores: ' + skipCount, 'ok');
+  log('Proyectos con imágenes: ' + projsWithImgs.size, 'ok');
+  updateStats();
+});
+
+document.getElementById('btnStop').addEventListener('click', () => {
+  running = false;
+  document.getElementById('btnStop').style.display = 'none';
+  document.getElementById('btnStart').disabled = false;
+});
+
+// Verificar soporte File System Access API
+if (!window.showDirectoryPicker) {
+  log('⚠️ Tu navegador no soporta File System Access API. Usá Chrome 86+ o Edge 86+.', 'err');
+  document.getElementById('btnFolder').disabled = true;
+}
+</script>
+</body>
+</html>

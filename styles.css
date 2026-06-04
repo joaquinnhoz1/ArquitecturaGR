@@ -1456,12 +1456,24 @@ image-slot::part(ring) {
     justify-content: flex-end;
     position: fixed;
   }
-  /* Anular el estado "solid" (fondo con blur) en mobile */
+  /* Estado "solid" en mobile — barra fija centrada */
   .nav[data-solid="true"] {
-    background: none;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    box-shadow: none;
+    background: color-mix(in srgb, var(--bg) 78%, transparent);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 1px 0 var(--line-2);
+    height: 64px;
+    padding-top: 0;
+    padding-bottom: 0;
+    align-items: center;
+  }
+  /* Logo centrado horizontal y verticalmente en la barra sólida */
+  .nav[data-solid="true"] .nav__logo {
+    top: 50%;
+    bottom: auto;
+    height: auto;
+    transform: translate(-50%, -50%);
+    align-items: center;
   }
 
   /* LOGO — centrado absoluto en la barra de nav */
@@ -1469,14 +1481,29 @@ image-slot::part(ring) {
     display: flex;
     position: absolute;
     left: 50%;
+    top: 16px;
     transform: translateX(-50%);
-    height: 56px;
-    overflow: hidden;
+    height: 44px;       /* igual al área táctil del burger → centro perfecto */
+    overflow: visible;  /* no recortar el logo */
   }
   .nav__logo-img {
-    height: 100px;
-    margin-top: -22px;
+    height: 86px;
+    margin-top: -21px;  /* centra la imagen de 86px en el contenedor de 44px: (44-86)/2 */
     mix-blend-mode: normal;
+  }
+
+  /* BURGER — siempre con offset mínimo del borde */
+  .nav {
+    align-items: flex-start;
+    padding-top: 16px;
+  }
+
+  /* LOGO + BURGER — más bajos en las primeras 4 secciones (film/hero, data-light) */
+  .nav[data-light="true"] {
+    padding-top: 56px;
+  }
+  .nav[data-light="true"] .nav__logo {
+    top: 56px;  /* centro del logo = 56+22 = 78px = centro del burger ✓ */
   }
 
   /* HAMBURGER — área táctil 44×44px, líneas más gruesas */
@@ -1537,38 +1564,35 @@ image-slot::part(ring) {
   .film__cap      { bottom: clamp(2.5rem, 6vh, 4rem); }
   .film__scrollcue { bottom: clamp(2.5rem, 6vh, 4rem); }
 
-  /* PORTFOLIO — "Ver obra" siempre visible en touch (sin hover disponible) */
-  .proj__view {
-    opacity: 1;
-    transform: none;
-    margin-top: 0.9rem;
-    gap: 0.9em;
-  }
-  /* PORTFOLIO — caption debajo de la imagen en mobile */
-  .proj { padding-bottom: 9rem; }
-  .proj__media { overflow: visible; }
-  .proj__scrim { display: none; }
+  /* PORTFOLIO — caption superpuesto sobre la imagen en mobile */
+  .proj { padding-bottom: 0; }
+  .proj__media { overflow: hidden; }
+  .proj__scrim { display: block; }
   .proj__no {
-    top: clamp(1.8rem, 4vw, 3rem);
+    top: clamp(1.2rem, 3.5vw, 2rem);
     right: clamp(1rem, 3vw, 1.8rem);
   }
   .proj__cap {
-    top: calc(100% + 1rem);
-    bottom: auto;
-    left: 0;
-    right: 0;
+    top: auto;
+    bottom: clamp(1.4rem, 4vh, 2.8rem);
+    left: clamp(1rem, 4vw, 2rem);
+    right: clamp(1rem, 4vw, 2rem);
     padding: 0;
-    color: var(--ink);
+    color: var(--paper);
   }
-  .proj__loc { color: var(--ink-2); }
+  .proj__loc { color: rgba(255,255,255,0.82); }
   .proj__name {
-    color: var(--ink);
-    text-shadow: none;
+    color: var(--paper);
+    text-shadow: 0 4px 40px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.4);
+    font-size: clamp(1.6rem, 6vw, 2.4rem);
   }
+  /* "Ver obra" siempre visible en touch (sin hover) */
   .proj__view {
-    color: var(--ink);
+    color: var(--paper);
     opacity: 1;
     transform: none;
+    margin-top: 0.7rem;
+    gap: 0.9em;
   }
 
   /* FORMULARIO — botón submit de ancho completo para evitar desborde */
