@@ -1452,16 +1452,16 @@ image-slot::part(ring) {
   .nav__links, .nav__cta { display: none; }
   .nav__burger { display: flex; }
 
-  /* Logo centrado en mobile */
+  /* Logo centrado en mobile — nav vuelve a fixed para superponerse sobre el hero */
   .nav {
     justify-content: center;
-    position: relative;
+    position: fixed;
   }
   .nav__burger {
     position: absolute;
     right: clamp(1.2rem, 5vw, 3.5rem);
   }
-  .nav__logo-img { height: 34px; }
+  .nav__logo-img { height: 68px; }
 }
 
 /* ===========================================================================
