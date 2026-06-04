@@ -1450,7 +1450,6 @@ image-slot::part(ring) {
    =========================================================================== */
 @media (max-width: 900px) {
   .nav__links, .nav__cta { display: none; }
-  .nav__burger { display: flex; }
 
   /* Eliminar barra horizontal en mobile — solo burger flotante sin fondo */
   .nav {
@@ -1464,8 +1463,32 @@ image-slot::part(ring) {
     backdrop-filter: none;
     box-shadow: none;
   }
-  .nav__logo { display: none; }
-  .nav__burger { position: static; }
+
+  /* LOGO — centrado absoluto en la barra de nav */
+  .nav__logo {
+    display: flex;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 56px;
+    overflow: hidden;
+  }
+  .nav__logo-img {
+    height: 100px;
+    margin-top: -22px;
+    mix-blend-mode: normal;
+  }
+
+  /* HAMBURGER — área táctil 44×44px, líneas más gruesas */
+  .nav__burger {
+    display: flex;
+    position: static;
+    width: 44px;
+    min-width: 44px;
+    gap: 6px;
+    padding: 0 7px;
+  }
+  .nav__burger span { height: 2px; }
 }
 
 /* ===========================================================================
@@ -1510,9 +1533,9 @@ image-slot::part(ring) {
   .film__actions { margin-top: 1.4rem; gap: 0.9rem 1.6rem; }
   .film__meta    { margin-top: 1.5rem; gap: 1.8rem; }
 
-  /* FILM — levantar captions y scrollcue para que no queden detrás de la barra */
-  .film__cap      { bottom: clamp(5.2rem, 13vh, 7rem); }
-  .film__scrollcue { bottom: clamp(5.2rem, 13vh, 7rem); }
+  /* FILM — posición natural de captions y scrollcue (sin compensación de barra) */
+  .film__cap      { bottom: clamp(2.5rem, 6vh, 4rem); }
+  .film__scrollcue { bottom: clamp(2.5rem, 6vh, 4rem); }
 
   /* PORTFOLIO — "Ver obra" siempre visible en touch (sin hover disponible) */
   .proj__view {
@@ -1521,7 +1544,32 @@ image-slot::part(ring) {
     margin-top: 0.9rem;
     gap: 0.9em;
   }
-  .proj__cap { bottom: clamp(5rem, 11vh, 6rem); }
+  /* PORTFOLIO — caption debajo de la imagen en mobile */
+  .proj { padding-bottom: 9rem; }
+  .proj__media { overflow: visible; }
+  .proj__scrim { display: none; }
+  .proj__no {
+    top: clamp(1.8rem, 4vw, 3rem);
+    right: clamp(1rem, 3vw, 1.8rem);
+  }
+  .proj__cap {
+    top: calc(100% + 1rem);
+    bottom: auto;
+    left: 0;
+    right: 0;
+    padding: 0;
+    color: var(--ink);
+  }
+  .proj__loc { color: var(--ink-2); }
+  .proj__name {
+    color: var(--ink);
+    text-shadow: none;
+  }
+  .proj__view {
+    color: var(--ink);
+    opacity: 1;
+    transform: none;
+  }
 
   /* FORMULARIO — botón submit de ancho completo para evitar desborde */
   .form__foot {
@@ -1547,57 +1595,9 @@ image-slot::part(ring) {
 
   /* LIGHTBOX — ya está arriba, este bloque cierra el 768px */
 
-  /* RECORRIDO — barra horizontal fija en la parte inferior */
-  .recorrido {
-    left: 50%;
-    top: auto;
-    bottom: max(0.8rem, env(safe-area-inset-bottom));
-    transform: translateX(-50%);
-    flex-direction: row;
-    align-items: center;
-    gap: 0.1rem;
-    mix-blend-mode: normal;
-    background: rgba(0, 0, 0, 0.44);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    padding: 0.55rem 1rem;
-    border-radius: 40px;
-    width: max-content;
-    max-width: 90vw;
-    overflow: visible;
-  }
-  .recorrido button {
-    position: relative;
-    flex-direction: row;
-    align-items: center;
-    padding: 3px 0.5rem;
-  }
-  /* Label flota sobre el punto activo, sin ocupar espacio en la barra */
-  .recorrido .rlabel {
-    display: block;
-    position: absolute;
-    bottom: calc(100% + 0.55rem);
-    left: 50%;
-    transform: translateX(-50%);
-    white-space: nowrap;
-    font-size: 0.52rem;
-    letter-spacing: 0.16em;
-    opacity: 0;
-    transition: opacity 0.4s ease;
-    pointer-events: none;
-    text-shadow: 0 1px 8px rgba(0,0,0,0.7);
-  }
-  .recorrido button[data-active="true"] .rlabel {
-    opacity: 0.95;
-    transform: translateX(-50%);
-  }
-  .recorrido button:hover .rlabel {
-    opacity: 0.75;
-    transform: translateX(-50%);
-  }
-
-  /* Padding inferior: el contenido nunca queda detrás de la barra */
-  body { padding-bottom: 3.5rem; }
+  /* RECORRIDO — ocultar en mobile; la barra horizontal no se usa */
+  .recorrido { display: none; }
+  body { padding-bottom: 0; }
 
 }
 
@@ -1610,11 +1610,11 @@ image-slot::part(ring) {
     padding-bottom: 0.85rem;
   }
 
-  /* FILM — posición del caption (bottom elevado para no quedar bajo la barra) */
+  /* FILM — posición del caption en pantallas pequeñas */
   .film__cap {
     left:   clamp(1.2rem, 4.5vw, 1.9rem);
     right:  clamp(1.2rem, 4.5vw, 1.9rem);
-    bottom: clamp(5.2rem, 13vh, 7rem);
+    bottom: clamp(2rem, 5vh, 3.5rem);
   }
 
   /* FILM — etiqueta del capítulo más cerca del nav */
@@ -1639,9 +1639,6 @@ image-slot::part(ring) {
 
   /* FILM — ocultar scroll-cue para evitar solapamiento con CTA */
   .film__scrollcue { display: none; }
-
-  /* RECORRIDO — etiqueta sigue mostrándose (override del bloque 768px) */
-  .recorrido .rlabel { display: block; }
 
   /* SECCIÓN — margen inferior de la cabecera */
   .section__head { margin-bottom: clamp(2rem, 5vh, 3.5rem); }
