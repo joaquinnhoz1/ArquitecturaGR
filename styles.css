@@ -1469,10 +1469,11 @@ image-slot::part(ring) {
   }
   /* Logo centrado horizontal y verticalmente en la barra sólida */
   .nav[data-solid="true"] .nav__logo {
-    top: 50%;
-    bottom: auto;
+    top: 0;
+    bottom: 0;
     height: auto;
-    transform: translate(-50%, -50%);
+    overflow: visible;
+    transform: translateX(-50%);
     align-items: center;
   }
 
