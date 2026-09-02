@@ -935,6 +935,8 @@ image-slot::part(ring) {
   will-change: transform;
 }
 .proj:hover .proj__img { transform: translateY(calc((var(--p,0.5) - 0.5) * 16% * var(--motion))) scale(1.12); }
+.proj__photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+.proj__img:not(:has(.proj__photo))::after { opacity: 0.55; }
 .proj__scrim {
   position: absolute;
   inset: 0;
@@ -1111,6 +1113,8 @@ image-slot::part(ring) {
 .lb__shot.tall { aspect-ratio: 16/10; }
 .lb__shot.duo { display: grid; grid-template-columns: 1fr 1fr; gap: inherit; }
 .lb__shot.duo > div { aspect-ratio: 3/4; overflow: hidden; }
+.lb__photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+.lb__photo--empty { background: var(--bg-2); }
 @media (max-width: 760px) {
   .lb__head { grid-template-columns: 1fr; }
   .lb__shot.duo { grid-template-columns: 1fr; }

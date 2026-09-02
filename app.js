@@ -8,6 +8,117 @@
   const $$ = (s, c) => Array.from((c || document).querySelectorAll(s));
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]
+  ));
+
+  /* ---------------------------------------------------------------------- *
+   *  0 · CONTENIDO EDITABLE (content.json → override de data.js)
+   * ---------------------------------------------------------------------- */
+  // content.json es la fuente de verdad editable desde /admin. Si no existe
+  // o falla, el sitio usa los valores por defecto de data.js + el HTML.
+  window.CONTENT = null;
+  async function loadContent() {
+    try {
+      const r = await fetch("content.json", { cache: "no-store" });
+      if (!r.ok) return;
+      const c = await r.json();
+      window.CONTENT = c;
+      if (Array.isArray(c.servicios) && c.servicios.length) window.SERVICIOS = c.servicios;
+      if (Array.isArray(c.metodo) && c.metodo.length) window.METODO = c.metodo;
+      if (Array.isArray(c.chips) && c.chips.length) window.CHIPS = c.chips;
+      if (Array.isArray(c.projects) && c.projects.length) window.PROJECTS = c.projects;
+    } catch (e) {
+      /* offline / archivo ausente → defaults */
+    }
+  }
+
+  const setText = (sel, val) => { const el = $(sel); if (el != null && val != null) el.textContent = val; };
+  const setHTML = (sel, val) => { const el = $(sel); if (el != null && val != null) el.innerHTML = val; };
+  const setAttr = (sel, attr, val) => { const el = $(sel); if (el != null && val != null) el.setAttribute(attr, val); };
+
+  function applyContent() {
+    const c = window.CONTENT;
+    if (!c) return;
+    const t = c.texts || {};
+
+    if (t.hero) {
+      setText('.film__cap[data-cap="hero"] .film__eyebrow', t.hero.eyebrow);
+      setHTML('.film__cap[data-cap="hero"] .film__title', t.hero.title);
+      setText('.film__cap[data-cap="hero"] .film__sub', t.hero.sub);
+      const b = $('.film__cap[data-cap="hero"] .btn'); if (b && t.hero.ctaPrimary) b.childNodes[0].nodeValue = t.hero.ctaPrimary + " ";
+      const l = $('.film__cap[data-cap="hero"] .hero__link'); if (l && t.hero.ctaSecondary) l.textContent = t.hero.ctaSecondary;
+    }
+    if (t.filmEstudio) {
+      setText('.film__cap[data-cap="estudio"] .film__eyebrow', t.filmEstudio.eyebrow);
+      setHTML('.film__cap[data-cap="estudio"] .film__title', t.filmEstudio.title);
+      setText('.film__cap[data-cap="estudio"] .film__sub', t.filmEstudio.sub);
+      const st = $$('.film__cap[data-cap="estudio"] .stat');
+      if (st[0]) { setText('.film__cap[data-cap="estudio"] .stat:nth-child(1) .n', t.filmEstudio.stat1n); setText('.film__cap[data-cap="estudio"] .stat:nth-child(1) .l', t.filmEstudio.stat1l); }
+      if (st[1]) { setText('.film__cap[data-cap="estudio"] .stat:nth-child(2) .n', t.filmEstudio.stat2n); setText('.film__cap[data-cap="estudio"] .stat:nth-child(2) .l', t.filmEstudio.stat2l); }
+    }
+    if (t.filmCocina) {
+      setText('.film__cap[data-cap="cocina"] .film__eyebrow', t.filmCocina.eyebrow);
+      setHTML('.film__cap[data-cap="cocina"] .film__title', t.filmCocina.title);
+      setText('.film__cap[data-cap="cocina"] .film__sub', t.filmCocina.sub);
+    }
+    if (t.filmPatio) {
+      setText('.film__cap[data-cap="patio"] .film__eyebrow', t.filmPatio.eyebrow);
+      setHTML('.film__cap[data-cap="patio"] .film__title', t.filmPatio.title);
+      setText('.film__cap[data-cap="patio"] .film__sub', t.filmPatio.sub);
+    }
+    if (t.servicios) {
+      setText('#espacios .eyebrow', t.servicios.eyebrow);
+      setHTML('#espacios .section__head h2', t.servicios.title);
+      setHTML('#espacios .lede', t.servicios.lede);
+    }
+    if (t.portfolio) {
+      setText('#portfolio .eyebrow', t.portfolio.eyebrow);
+      setHTML('#portfolio .section__head h2', t.portfolio.title);
+      setHTML('#portfolio .lede', t.portfolio.lede);
+    }
+    if (t.metodo) {
+      setText('#metodo .eyebrow', t.metodo.eyebrow);
+      setHTML('#metodo .metodo__aside h2', t.metodo.title);
+      setHTML('#metodo .metodo__aside .lede', t.metodo.lede);
+    }
+    if (t.contacto) {
+      setText('#contacto .eyebrow', t.contacto.eyebrow);
+      setHTML('#contacto .contacto__intro h2', t.contacto.title);
+      setText('#contacto .contacto__intro > p', t.contacto.text);
+      const whys = $$('#contacto .why li');
+      (t.contacto.why || []).forEach((w, i) => {
+        if (whys[i]) {
+          const svg = whys[i].querySelector("svg");
+          whys[i].textContent = "";
+          if (svg) whys[i].appendChild(svg);
+          whys[i].appendChild(document.createTextNode(w));
+        }
+      });
+    }
+    if (t.footer) {
+      setHTML('.footer__cta', t.footer.cta);
+      setHTML('.footer__slogan', t.footer.slogan);
+      setText('.footer__brand > p:last-child', t.footer.desc);
+    }
+
+    const ct = c.contact || {};
+    if (ct.email) { setText('.footer__col a[href^="mailto"]', ct.email); setAttr('.footer__col a[href^="mailto"]', "href", "mailto:" + ct.email); }
+    if (ct.phone) { setText('.footer__col a[href^="tel"]', ct.phone); setAttr('.footer__col a[href^="tel"]', "href", "tel:" + (ct.phoneHref || ct.phone).replace(/[^\d+]/g, "")); }
+    if (ct.location) setText('.footer__col a[href^="tel"] ~ p', ct.location);
+    if (ct.instagram) setAttr('.footer__social a[aria-label="Instagram"]', "href", ct.instagram);
+    if (ct.facebook) setAttr('.footer__social a[aria-label="Facebook"]', "href", ct.facebook);
+    if (ct.whatsapp) setAttr('.footer__social a[aria-label="WhatsApp"]', "href", ct.whatsapp);
+    if (ct.handle) setText('.footer__col:last-child > p:last-child', ct.handle);
+
+    const f = c.film || {};
+    const fm = { fachada: f.fachada, living: f.living, cocina: f.cocina, patio: f.patio };
+    $$(".film__layer").forEach((l) => {
+      const src = fm[l.dataset.shot];
+      const img = l.querySelector(".scene-img");
+      if (src && img && img.getAttribute("src") !== src) img.setAttribute("src", src);
+    });
+  }
 
   /* ---------------------------------------------------------------------- *
    *  1 · RENDER DE CONTENIDO
@@ -58,8 +169,8 @@
     folio.innerHTML = list.map((p, i) => `
       <article class="proj reveal" data-proj="${p.id}" data-scene data-screen-label="Proyecto ${i + 1}">
         <div class="proj__media">
-          <div class="proj__img ph">
-            <image-slot id="ph-${p.id}" shape="rect" fit="cover" placeholder="${p.name} — arrastrá tu fotografía"></image-slot>
+          <div class="proj__img ph" data-ph="${esc(p.name)}">
+            ${p.image ? `<img class="proj__photo" src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" />` : ""}
           </div>
           <div class="proj__scrim"></div>
           <span class="proj__no">${String(i + 1).padStart(2, "0")} <i>/ ${String(total).padStart(2, "0")}</i></span>
@@ -276,14 +387,20 @@
   const lbInner = $("#lbInner");
   let currentIdx = -1;
 
-  function shotMarkup(proj, kind, n) {
+  const lbImg = (src, alt) => (src
+    ? `<img class="lb__photo" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" />`
+    : `<div class="lb__photo lb__photo--empty" data-ph="${esc(alt)}"></div>`);
+
+  function shotMarkup(proj, shot, n) {
+    // shot puede ser el string "tall"/"duo" (data.js viejo) o {type,src,src2}.
+    const kind = typeof shot === "string" ? shot : shot.type;
     if (kind === "duo") {
       return `<div class="lb__shot duo">
-        <div><image-slot id="lbph-${proj.id}-${n}a" shape="rect" fit="cover" placeholder="Detalle"></image-slot></div>
-        <div><image-slot id="lbph-${proj.id}-${n}b" shape="rect" fit="cover" placeholder="Detalle"></image-slot></div>
+        <div>${lbImg(shot.src, proj.name + " — detalle")}</div>
+        <div>${lbImg(shot.src2, proj.name + " — detalle")}</div>
       </div>`;
     }
-    return `<div class="lb__shot tall"><image-slot id="lbph-${proj.id}-${n}" shape="rect" fit="cover" placeholder="${proj.name} — fotografía ${n + 1}"></image-slot></div>`;
+    return `<div class="lb__shot tall">${lbImg(shot.src, proj.name + " — fotografía " + (n + 1))}</div>`;
   }
 
   function buildLightbox(proj) {
@@ -418,8 +535,10 @@
   /* ---------------------------------------------------------------------- *
    *  7 · INIT
    * ---------------------------------------------------------------------- */
-  function init() {
+  async function init() {
     const yr = $("#year"); if (yr) yr.textContent = new Date().getFullYear();
+    await loadContent();
+    applyContent();
     renderServicios();
     renderSteps();
     renderChips();
