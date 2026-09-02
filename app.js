@@ -275,8 +275,9 @@
 
   function filmVideoInit() {
     if (!filmVideo) return;
-    const coarse = window.matchMedia("(pointer: coarse)").matches;
-    filmMode = prefersReduced ? "still" : (coarse ? "loop" : "scrub");
+    // El video SIEMPRE lo controla el scroll (desktop y mobile). Nunca se
+    // reproduce solo. Con reduce-motion queda el primer fotograma fijo.
+    filmMode = prefersReduced ? "still" : "scrub";
 
     const onReady = () => { filmVideoReady = true; };
     filmVideo.addEventListener("loadedmetadata", onReady);
@@ -284,28 +285,30 @@
     filmVideo.addEventListener("canplay", onReady);
     if (filmVideo.readyState >= 1) filmVideoReady = true;
 
-    if (filmMode === "loop") {
-      filmVideo.loop = true;
-      const playSafe = () => filmVideo.play().catch(() => { filmMode = "still"; });
-      playSafe();
-      // pausar cuando el recorrido no está en pantalla (batería / CPU en mobile)
-      if ("IntersectionObserver" in window) {
-        new IntersectionObserver((ents) => {
-          ents.forEach((en) => {
-            if (filmMode !== "loop") return;
-            if (en.isIntersecting) playSafe();
-            else filmVideo.pause();
-          });
-        }, { threshold: 0.01 }).observe(filmEl.querySelector(".film__pin") || filmEl);
+    if (filmMode !== "scrub") return;
+
+    // "Primar" el decoder: iOS y algunos Android no cargan ni permiten hacer
+    // seek hasta que el video se reprodujo una vez. play() (está muted) →
+    // pause() apenas arranca. Es imperceptible y NO queda reproduciéndose.
+    let primed = false;
+    const prime = () => {
+      if (primed) return;
+      const p = filmVideo.play();
+      if (p && p.then) {
+        p.then(() => {
+          primed = true;
+          filmVideo.pause();
+          try { filmVideo.currentTime = 0; } catch (e) {}
+        }).catch(() => { /* bloqueado: el scrub suele funcionar igual */ });
+      } else {
+        try { filmVideo.pause(); filmVideo.currentTime = 0; } catch (e) {}
       }
-    } else if (filmMode === "scrub") {
-      // "primar" el decoder: algunos navegadores no permiten seek en un
-      // video que nunca se reprodujo. play()→pause() inmediato (está muted).
-      const prime = filmVideo.play();
-      if (prime && prime.then) prime.then(() => filmVideo.pause()).catch(() => {});
-      else { try { filmVideo.pause(); } catch (e) {} }
-      try { filmVideo.currentTime = 0; } catch (e) {}
-    }
+    };
+    prime();
+    // Reintento tras el primer gesto, por si el autoplay muted fue bloqueado.
+    const kick = () => { prime(); };
+    window.addEventListener("touchstart", kick, { passive: true, once: true });
+    window.addEventListener("pointerdown", kick, { once: true });
   }
 
   function filmScrubTick() {
