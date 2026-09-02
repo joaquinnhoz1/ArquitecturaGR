@@ -6,12 +6,11 @@
 
 /* ---- SERVICIOS (sección Espacios) ---------------------------------------- */
 window.SERVICIOS = [
-  { name: "Proyecto desde cero",      desc: "Diseñamos tu vivienda o local desde la primera idea hasta el plano final." },
-  { name: "Reformas",                 desc: "Renovamos espacios existentes con una mirada nueva y funcional." },
-  { name: "Ampliaciones",             desc: "Sumamos metros y posibilidades respetando el carácter de la obra." },
+  { name: "Proyectos desde cero",     desc: "Diseño y desarrollo de viviendas nuevas, desde las primeras ideas hasta la documentación necesaria para llevarlas a obra. Trabajamos sobre la distribución, orientación, iluminación, materialidad y relación entre los espacios para crear una vivienda que se adapte a tu forma de vivir." },
+  { name: "Reformas y ampliaciones",  desc: "Si tu casa ya no responde a tus necesidades, no necesariamente tenés que mudarte. Analizamos el espacio existente y proyectamos ampliaciones, reformas y redistribuciones para mejorar su funcionalidad, aprovechando al máximo lo que ya tenés. La casa tiene que adaptarse a vos, no vos a la casa." },
   { name: "Interiorismo",             desc: "Materiales, mobiliario y luz para que cada ambiente tenga alma." },
-  { name: "Dirección de obra",        desc: "Coordinamos y supervisamos la construcción cuidando plazos y calidad." },
-  { name: "Documentación municipal",  desc: "Gestionamos planos, permisos y trámites para que construyas tranquilo." },
+  { name: "Dirección de obra",        desc: "Acompañamiento durante la ejecución para controlar que lo proyectado se lleve adelante correctamente. Se realiza seguimiento del avance, coordinación con equipos de trabajo y registro del proceso mediante informes y fotografías." },
+  { name: "Empadronamientos",         desc: "Documentación y gestión de construcciones existentes que necesitan ser declaradas o regularizadas. Analizamos el estado actual, relevamos la construcción y desarrollamos la documentación correspondiente para iniciar el proceso." },
   { name: "Renderizados",             desc: "Visualizá tu proyecto con realismo antes de poner el primer ladrillo." },
   { name: "Asesoramiento integral",   desc: "Te acompañamos en cada decisión, desde el terreno hasta la entrega." },
 ];
@@ -27,8 +26,8 @@ window.METODO = [
 
 /* ---- SERVICIOS REQUERIDOS (chips del formulario) ------------------------- */
 window.CHIPS = [
-  "Proyecto", "Reforma", "Ampliación", "Interiorismo",
-  "Dirección de obra", "Documentación", "Renders", "Asesoramiento",
+  "Proyecto desde cero", "Reforma / ampliación", "Interiorismo",
+  "Dirección de obra", "Empadronamiento", "Renders", "Asesoramiento",
 ];
 
 /* ---- PORTFOLIO -----------------------------------------------------------
