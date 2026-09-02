@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Panel · arq.estudio.gr</title>
+<style>
+  :root {
+    --bg: #f4f1ea; --card: #fffdf8; --ink: #1d1b16; --ink-2: #5c574c; --ink-3: #8c8678;
+    --line: rgba(29,27,22,.14); --accent: #b07b54; --accent-ink: #fff;
+    --ok: #3f7d4e; --err: #b3402e; --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1a17; --card: #24221d; --ink: #f2efe7; --ink-2: #b6b0a1; --ink-3: #857f70;
+      --line: rgba(255,255,255,.14); --accent: #c8a48b; --accent-ink: #1b1a17;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.55 "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  h1, h2, h3 { font-weight: 600; line-height: 1.2; margin: 0; }
+  a { color: var(--accent); }
+  button { font: inherit; cursor: pointer; }
+  input, textarea, select {
+    font: inherit; width: 100%; padding: .55em .7em; color: var(--ink);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  }
+  input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+  textarea { resize: vertical; min-height: 4.5em; }
+  label { display: block; font-size: .8rem; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 .35em; }
+  .btn {
+    display: inline-flex; align-items: center; gap: .5em; border: 1px solid var(--line);
+    background: var(--card); color: var(--ink); padding: .6em 1em; border-radius: 8px;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn--primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  .btn--sm { padding: .3em .6em; font-size: .85rem; }
+  .btn--danger:hover { border-color: var(--err); color: var(--err); }
+  .muted { color: var(--ink-2); font-size: .9rem; }
+
+  /* ---- Login ---- */
+  #login { min-height: 100dvh; display: grid; place-items: center; padding: 1.5rem; }
+  #login .card { width: 100%; max-width: 380px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.6rem; }
+  .card > * + * { margin-top: 1rem; }
+
+  /* ---- App shell ---- */
+  #app { display: none; }
+  #app.on { display: block; }
+  header.bar {
+    position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 1rem;
+    padding: .8rem clamp(1rem, 3vw, 2rem); background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
+  }
+  header.bar .sp { flex: 1; }
+  header.bar h1 { font-size: 1rem; letter-spacing: .02em; }
+  #status { font-size: .88rem; }
+  #status.ok { color: var(--ok); } #status.err { color: var(--err); }
+  .layout { display: grid; grid-template-columns: 190px 1fr; gap: clamp(1rem,3vw,2.4rem); max-width: 1100px; margin: 0 auto; padding: 1.5rem clamp(1rem,3vw,2rem) 5rem; }
+  nav.side { position: sticky; top: 72px; align-self: start; display: flex; flex-direction: column; gap: .2rem; }
+  nav.side button {
+    text-align: left; border: 0; background: none; color: var(--ink-2); padding: .5em .7em; border-radius: 7px;
+  }
+  nav.side button.on { background: var(--card); color: var(--ink); font-weight: 600; }
+  @media (max-width: 780px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.side { position: static; flex-direction: row; flex-wrap: wrap; gap: .4rem; }
+    nav.side button { border: 1px solid var(--line); }
+  }
+  section.panel { display: none; }
+  section.panel.on { display: block; }
+  section.panel > h2 { font-size: 1.3rem; margin-bottom: .3rem; }
+  section.panel > p.intro { margin: 0 0 1.4rem; }
+
+  .field { margin-bottom: 1rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 620px) { .grid2 { grid-template-columns: 1fr; } }
+
+  .item {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 1rem; margin-bottom: 1rem;
+  }
+  .item__head { display: flex; align-items: center; gap: .6rem; margin-bottom: .8rem; }
+  .item__head strong { flex: 1; font-size: 1rem; }
+  .row-btns { display: flex; gap: .3rem; }
+
+  .hint { font-size: .8rem; color: var(--ink-3); margin-top: .3em; }
+  code { background: var(--bg); padding: .1em .35em; border-radius: 4px; font-size: .85em; }
+
+  .thumb {
+    width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 8px;
+    background: var(--bg); border: 1px solid var(--line); display: block;
+  }
+  .thumb--empty { display: grid; place-items: center; color: var(--ink-3); font-size: .8rem; }
+  .uploader { display: grid; gap: .5rem; }
+  .uploader input[type=file] { font-size: .85rem; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 1.2rem; transform: translateX(-50%);
+    background: var(--ink); color: var(--bg); padding: .7em 1.2em; border-radius: 8px;
+    font-size: .9rem; opacity: 0; pointer-events: none; transition: opacity .25s; max-width: 90vw;
+  }
+  .toast.on { opacity: 1; }
+  .pill { display:inline-block; font-size:.72rem; padding:.15em .5em; border:1px solid var(--line); border-radius:99px; color:var(--ink-3); }
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="login">
+  <form class="card" id="loginForm">
+    <h1>Panel de contenido</h1>
+    <p class="muted">arq.estudio.gr</p>
+    <div>
+      <label for="email">Email</label>
+      <input type="email" id="email" autocomplete="username" value="admin@arqricci.com" />
+    </div>
+    <div>
+      <label for="pass">Contraseña</label>
+      <input type="password" id="pass" autocomplete="current-password" required />
+    </div>
+    <button class="btn btn--primary" type="submit" style="width:100%">Entrar</button>
+    <p id="loginErr" class="muted" style="color:var(--err); min-height:1.2em"></p>
+  </form>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+  <header class="bar">
+    <h1>arq.estudio.gr <span class="pill">panel</span></h1>
+    <span class="sp"></span>
+    <span id="status" class="muted"></span>
+    <button class="btn" id="reloadBtn" title="Descartar cambios y recargar">Recargar</button>
+    <button class="btn btn--primary" id="publishBtn">Publicar cambios</button>
+  </header>
+
+  <div class="layout">
+    <nav class="side" id="sidenav"></nav>
+    <div id="panels"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+  const $ = (s, c) => (c || document).querySelector(s);
+  const $$ = (s, c) => Array.from((c || document).querySelectorAll(s));
+  const el = (tag, props, kids) => {
+    const n = document.createElement(tag);
+    if (props) for (const k in props) {
+      if (k === "class") n.className = props[k];
+      else if (k === "html") n.innerHTML = props[k];
+      else if (k === "text") n.textContent = props[k];
+      else if (k.startsWith("on")) n.addEventListener(k.slice(2), props[k]);
+      else n.setAttribute(k, props[k]);
+    }
+    (kids || []).forEach((c) => n.appendChild(typeof c === "string" ? document.createTextNode(c) : c));
+    return n;
+  };
+  const slug = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "item";
+
+  let PASS = sessionStorage.getItem("gr_admin_pass") || "";
+  let state = null;           // content.json en edición
+  let pendingImages = [];     // { path, dataBase64, dataUrl }
+  let dirty = false;
+
+  function markDirty() { dirty = true; setStatus("Cambios sin publicar", ""); }
+  function setStatus(msg, kind) {
+    const s = $("#status"); s.textContent = msg || ""; s.className = kind || "muted";
+  }
+  function toast(msg) {
+    const t = $("#toast"); t.textContent = msg; t.classList.add("on");
+    clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("on"), 3200);
+  }
+
+  window.addEventListener("beforeunload", (e) => {
+    if (dirty) { e.preventDefault(); e.returnValue = ""; }
+  });
+
+  /* ---------------- API ---------------- */
+  async function api(payload) {
+    const r = await fetch("/api/publish", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify(Object.assign({ password: PASS }, payload)),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || ("Error " + r.status));
+    return data;
+  }
+
+  /* ---------------- Login ---------------- */
+  $("#loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const pass = $("#pass").value;
+    $("#loginErr").textContent = "";
+    try {
+      PASS = pass;
+      await api({ action: "login" });
+      sessionStorage.setItem("gr_admin_pass", pass);
+      await boot();
+    } catch (err) {
+      PASS = "";
+      $("#loginErr").textContent = err.message;
+    }
+  });
+
+  async function boot() {
+    const r = await fetch("content.json?" + Date.now());
+    state = await r.json();
+    normalize(state);
+    $("#login").style.display = "none";
+    $("#app").classList.add("on");
+    buildNav();
+    renderAll();
+    setStatus("Todo publicado", "ok");
+  }
+
+  // si ya hay sesión, intentar entrar directo
+  if (PASS) {
+    api({ action: "login" }).then(boot).catch(() => { sessionStorage.removeItem("gr_admin_pass"); PASS = ""; });
+  }
+
+  function normalize(s) {
+    s.texts = s.texts || {};
+    s.contact = s.contact || {};
+    s.film = s.film || {};
+    s.servicios = s.servicios || [];
+    s.metodo = s.metodo || [];
+    s.chips = s.chips || [];
+    s.projects = s.projects || [];
+    s.projects.forEach((p) => {
+      p.gallery = (p.gallery || []).map((g) => (typeof g === "string" ? { type: g, src: "", src2: "" } : g));
+    });
+  }
+
+  /* ---------------- Image handling ---------------- */
+  async function resizeToWebp(file, maxDim) {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, (maxDim || 1600) / Math.max(bmp.width, bmp.height));
+    const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
+    const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+    cv.getContext("2d").drawImage(bmp, 0, 0, w, h);
+    bmp.close && bmp.close();
+    return cv.toDataURL("image/webp", 0.82);
+  }
+
+  // devuelve la ruta pública asignada
+  async function attachImage(file, baseName, maxDim) {
+    const dataUrl = await resizeToWebp(file, maxDim);
+    const dataBase64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
+    const path = "uploads/portfolio/" + baseName + "-" + Date.now().toString(36) + ".webp";
+    pendingImages.push({ path, dataBase64, dataUrl });
+    return { path, dataUrl };
+  }
+  function previewFor(pathOrEmpty) {
+    if (!pathOrEmpty) return "";
+    const pend = pendingImages.find((i) => i.path === pathOrEmpty);
+    return pend ? pend.dataUrl : (pathOrEmpty + "?" + Date.now());
+  }
+
+  function uploaderField(labelText, current, baseName, onSet, opts) {
+    opts = opts || {};
+    const img = el("img", { class: "thumb" });
+    const empty = el("div", { class: "thumb thumb--empty", text: "sin imagen" });
+    const set = (path) => {
+      const src = previewFor(path);
+      if (src) { img.src = src; img.style.display = "block"; empty.style.display = "none"; }
+      else { img.style.display = "none"; empty.style.display = "grid"; }
+    };
+    set(current);
+    const input = el("input", { type: "file", accept: "image/*", onchange: async (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      try {
+        const { path } = await attachImage(f, baseName, opts.maxDim);
+        onSet(path); set(path); markDirty();
+      } catch (err) { toast("No se pudo procesar la imagen: " + err.message); }
+      e.target.value = "";
+    }});
+    const clearBtn = el("button", { class: "btn btn--sm btn--danger", type: "button", text: "Quitar",
+      onclick: () => { onSet(""); set(""); markDirty(); } });
+    return el("div", { class: "field uploader" }, [
+      el("label", { text: labelText }), img, empty,
+      el("div", { class: "row-btns" }, [input, clearBtn]),
+    ]);
+  }
+
+  /* ---------------- Generic field builders ---------------- */
+  function textField(labelText, obj, key, opts) {
+    opts = opts || {};
+    const tag = opts.area ? "textarea" : "input";
+    const node = el(tag, { value: obj[key] == null ? "" : obj[key],
+      oninput: (e) => { obj[key] = e.target.value; markDirty(); } });
+    if (opts.area) node.textContent = obj[key] == null ? "" : obj[key];
+    const wrap = el("div", { class: "field" }, [el("label", { text: labelText }), node]);
+    if (opts.hint) wrap.appendChild(el("div", { class: "hint", html: opts.hint }));
+    return wrap;
+  }
+
+  const HTML_HINT = 'Podés usar <code>&lt;em&gt;palabra&lt;/em&gt;</code> para resaltar en cursiva y <code>&lt;br&gt;</code> para saltos de línea.';
+
+  /* ---------------- Panels ---------------- */
+  const PANELS = [
+    { id: "textos", label: "Textos", render: renderTextos },
+    { id: "contacto", label: "Contacto", render: renderContacto },
+    { id: "servicios", label: "Servicios", render: renderServicios },
+    { id: "metodo", label: "Método", render: renderMetodo },
+    { id: "chips", label: "Chips del form", render: renderChips },
+    { id: "proyectos", label: "Proyectos", render: renderProyectos },
+    { id: "recorrido", label: "Fotos del recorrido", render: renderRecorrido },
+  ];
+  let activePanel = "textos";
+
+  function buildNav() {
+    const nav = $("#sidenav"); nav.innerHTML = "";
+    PANELS.forEach((p) => {
+      nav.appendChild(el("button", {
+        class: p.id === activePanel ? "on" : "", text: p.label,
+        onclick: () => { activePanel = p.id; renderAll(); },
+      }));
+    });
+  }
+  function renderAll() {
+    buildNav();
+    const host = $("#panels"); host.innerHTML = "";
+    const p = PANELS.find((x) => x.id === activePanel);
+    const sec = el("section", { class: "panel on" });
+    host.appendChild(sec);
+    p.render(sec);
+  }
+
+  function group(sec, title) {
+    sec.appendChild(el("h2", { text: title }));
+    const box = el("div", { class: "item" });
+    sec.appendChild(box);
+    return box;
+  }
+
+  function renderTextos(sec) {
+    sec.appendChild(el("h2", { text: "Textos de las secciones" }));
+    sec.appendChild(el("p", { class: "intro muted", html: HTML_HINT }));
+    const t = state.texts;
+
+    const blocks = [
+      ["Recorrido — Inicio (hero)", t.hero, [
+        ["Bajada superior", "eyebrow"], ["Título", "title", 1], ["Subtítulo", "sub", 1],
+        ["Botón principal", "ctaPrimary"], ["Enlace secundario", "ctaSecondary"],
+      ]],
+      ["Recorrido — Estudio", t.filmEstudio, [
+        ["Bajada superior", "eyebrow"], ["Título", "title", 1], ["Subtítulo", "sub", 1],
+        ["Dato 1 — número", "stat1n"], ["Dato 1 — texto", "stat1l"],
+        ["Dato 2 — número", "stat2n"], ["Dato 2 — texto", "stat2l"],
+      ]],
+      ["Recorrido — Cocina", t.filmCocina, [["Bajada superior", "eyebrow"], ["Título", "title", 1], ["Subtítulo", "sub", 1]]],
+      ["Recorrido — Patio", t.filmPatio, [["Bajada superior", "eyebrow"], ["Título", "title", 1], ["Subtítulo", "sub", 1]]],
+      ["Sección Servicios (“Qué hacemos”)", t.servicios, [["Bajada superior", "eyebrow"], ["Título", "title", 1], ["Texto de intro", "lede", 1]]],
+      ["Sección Portfolio", t.portfolio, [["Bajada superior", "eyebrow"], ["Título", "title", 1], ["Texto de intro", "lede", 1]]],
+      ["Sección Método", t.metodo, [["Bajada superior", "eyebrow"], ["Título", "title", 1], ["Texto de intro", "lede", 1]]],
+      ["Sección Contacto", t.contacto, [["Bajada superior", "eyebrow"], ["Título", "title", 1], ["Párrafo", "text", 1]]],
+      ["Footer", t.footer, [["Frase grande", "cta", 1], ["Eslogan", "slogan"], ["Descripción", "desc", 1]]],
+    ];
+    blocks.forEach(([title, obj, fields]) => {
+      if (!obj) return;
+      const box = el("div", { class: "item" });
+      box.appendChild(el("div", { class: "item__head" }, [el("strong", { text: title })]));
+      fields.forEach(([lbl, key, area]) => box.appendChild(textField(lbl, obj, key, { area: !!area })));
+      sec.appendChild(box);
+    });
+
+    // "Por qué" del contacto (lista)
+    const why = (state.texts.contacto && state.texts.contacto.why) || [];
+    const box = el("div", { class: "item" });
+    box.appendChild(el("div", { class: "item__head" }, [el("strong", { text: "Contacto — lista “por qué”" })]));
+    listEditor(box, why, (v, i) => {
+      const inp = el("input", { value: v, oninput: (e) => { why[i] = e.target.value; markDirty(); } });
+      return inp;
+    }, () => "", () => renderAll());
+    sec.appendChild(box);
+  }
+
+  function renderContacto(sec) {
+    sec.appendChild(el("h2", { text: "Datos de contacto y redes" }));
+    sec.appendChild(el("p", { class: "intro muted", text: "Aparecen en el footer del sitio." }));
+    const c = state.contact;
+    const box = el("div", { class: "item" });
+    [
+      ["Email", "email"], ["Teléfono (visible)", "phone"],
+      ["Teléfono (para el enlace, sólo números)", "phoneHref"],
+      ["Ubicación", "location"], ["Instagram (URL)", "instagram"],
+      ["Facebook (URL)", "facebook"], ["WhatsApp (URL)", "whatsapp"],
+      ["Usuario / handle", "handle"],
+    ].forEach(([lbl, key]) => box.appendChild(textField(lbl, c, key)));
+    sec.appendChild(box);
+  }
+
+  /* generic list editor: rowFactory(value,index)->inputNode ; add()->newValue */
+  function listEditor(host, arr, rowFactory, addFactory, afterChange) {
+    arr.forEach((v, i) => {
+      const row = el("div", { class: "item__head" });
+      row.appendChild(rowFactory(v, i));
+      row.appendChild(el("div", { class: "row-btns" }, [
+        el("button", { class: "btn btn--sm", type: "button", text: "▲", onclick: () => { if (i > 0) { [arr[i-1],arr[i]]=[arr[i],arr[i-1]]; markDirty(); afterChange(); } } }),
+        el("button", { class: "btn btn--sm", type: "button", text: "▼", onclick: () => { if (i < arr.length-1) { [arr[i+1],arr[i]]=[arr[i],arr[i+1]]; markDirty(); afterChange(); } } }),
+        el("button", { class: "btn btn--sm btn--danger", type: "button", text: "✕", onclick: () => { arr.splice(i, 1); markDirty(); afterChange(); } }),
+      ]));
+      host.appendChild(row);
+    });
+    host.appendChild(el("button", { class: "btn btn--sm", type: "button", text: "+ Agregar",
+      onclick: () => { arr.push(addFactory()); markDirty(); afterChange(); } }));
+  }
+
+  function renderServicios(sec) {
+    sec.appendChild(el("h2", { text: "Servicios" }));
+    sec.appendChild(el("p", { class: "intro muted", text: "La lista de la sección “Qué hacemos”." }));
+    state.servicios.forEach((s, i) => {
+      const box = el("div", { class: "item" });
+      box.appendChild(el("div", { class: "item__head" }, [
+        el("strong", { text: "#" + (i + 1) }),
+        el("div", { class: "row-btns" }, [
+          el("button", { class: "btn btn--sm", type: "button", text: "▲", onclick: () => move(state.servicios, i, -1) }),
+          el("button", { class: "btn btn--sm", type: "button", text: "▼", onclick: () => move(state.servicios, i, 1) }),
+          el("button", { class: "btn btn--sm btn--danger", type: "button", text: "Borrar", onclick: () => { state.servicios.splice(i,1); markDirty(); renderAll(); } }),
+        ]),
+      ]));
+      box.appendChild(textField("Nombre", s, "name"));
+      box.appendChild(textField("Descripción", s, "desc", { area: true }));
+      sec.appendChild(box);
+    });
+    sec.appendChild(el("button", { class: "btn", type: "button", text: "+ Agregar servicio",
+      onclick: () => { state.servicios.push({ name: "Nuevo servicio", desc: "" }); markDirty(); renderAll(); } }));
+  }
+
+  function renderMetodo(sec) {
+    sec.appendChild(el("h2", { text: "Método de trabajo" }));
+    sec.appendChild(el("p", { class: "intro muted", text: "Los pasos de la sección Método." }));
+    state.metodo.forEach((s, i) => {
+      const box = el("div", { class: "item" });
+      box.appendChild(el("div", { class: "item__head" }, [
+        el("strong", { text: "Paso " + (i + 1) }),
+        el("div", { class: "row-btns" }, [
+          el("button", { class: "btn btn--sm", type: "button", text: "▲", onclick: () => move(state.metodo, i, -1) }),
+          el("button", { class: "btn btn--sm", type: "button", text: "▼", onclick: () => move(state.metodo, i, 1) }),
+          el("button", { class: "btn btn--sm btn--danger", type: "button", text: "Borrar", onclick: () => { state.metodo.splice(i,1); markDirty(); renderAll(); } }),
+        ]),
+      ]));
+      box.appendChild(textField("Título", s, "t"));
+      box.appendChild(textField("Descripción", s, "d", { area: true }));
+      sec.appendChild(box);
+    });
+    sec.appendChild(el("button", { class: "btn", type: "button", text: "+ Agregar paso",
+      onclick: () => { state.metodo.push({ t: "Nuevo paso", d: "" }); markDirty(); renderAll(); } }));
+  }
+
+  function renderChips(sec) {
+    sec.appendChild(el("h2", { text: "Chips del formulario" }));
+    sec.appendChild(el("p", { class: "intro muted", text: "Opciones de “Servicios requeridos” en el formulario de contacto." }));
+    const box = el("div", { class: "item" });
+    state.chips.forEach((v, i) => {
+      box.appendChild(el("div", { class: "item__head" }, [
+        el("input", { value: v, oninput: (e) => { state.chips[i] = e.target.value; markDirty(); } }),
+        el("div", { class: "row-btns" }, [
+          el("button", { class: "btn btn--sm", type: "button", text: "▲", onclick: () => move(state.chips, i, -1) }),
+          el("button", { class: "btn btn--sm", type: "button", text: "▼", onclick: () => move(state.chips, i, 1) }),
+          el("button", { class: "btn btn--sm btn--danger", type: "button", text: "✕", onclick: () => { state.chips.splice(i,1); markDirty(); renderAll(); } }),
+        ]),
+      ]));
+    });
+    box.appendChild(el("button", { class: "btn btn--sm", type: "button", text: "+ Agregar",
+      onclick: () => { state.chips.push("Nuevo"); markDirty(); renderAll(); } }));
+    sec.appendChild(box);
+  }
+
+  function move(arr, i, dir) {
+    const j = i + dir;
+    if (j < 0 || j >= arr.length) return;
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    markDirty(); renderAll();
+  }
+
+  function renderProyectos(sec) {
+    sec.appendChild(el("h2", { text: "Proyectos del portfolio" }));
+    sec.appendChild(el("p", { class: "intro muted", text: "Los proyectos ocultos no aparecen en el sitio (útil mientras no tengas fotos)." }));
+
+    state.projects.forEach((p, i) => {
+      const box = el("div", { class: "item" });
+      const head = el("div", { class: "item__head" }, [
+        el("strong", { text: (p.name || "Proyecto") + (p.hidden ? "  ·  oculto" : "") }),
+        el("div", { class: "row-btns" }, [
+          el("button", { class: "btn btn--sm", type: "button", text: "▲", onclick: () => move(state.projects, i, -1) }),
+          el("button", { class: "btn btn--sm", type: "button", text: "▼", onclick: () => move(state.projects, i, 1) }),
+          el("button", { class: "btn btn--sm btn--danger", type: "button", text: "Borrar",
+            onclick: () => { if (confirm("¿Borrar “" + p.name + "”?")) { state.projects.splice(i,1); markDirty(); renderAll(); } } }),
+        ]),
+      ]);
+      box.appendChild(head);
+
+      const vis = el("label", { class: "field", style: "display:flex; gap:.5em; align-items:center; text-transform:none; letter-spacing:0; color:var(--ink)" });
+      const cb = el("input", { type: "checkbox", style: "width:auto" });
+      cb.checked = !p.hidden;
+      cb.addEventListener("change", () => { p.hidden = !cb.checked; markDirty(); head.querySelector("strong").textContent = (p.name || "Proyecto") + (p.hidden ? "  ·  oculto" : ""); });
+      vis.appendChild(cb); vis.appendChild(document.createTextNode("Visible en el sitio"));
+      box.appendChild(vis);
+
+      const g2 = el("div", { class: "grid2" });
+      g2.appendChild(textField("Nombre", p, "name"));
+      g2.appendChild(textField("Ubicación", p, "location"));
+      g2.appendChild(textField("Tipo", p, "type"));
+      g2.appendChild(textField("Año", p, "year"));
+      g2.appendChild(textField("Superficie", p, "area"));
+      g2.appendChild(textField("ID (no cambiar)", p, "id"));
+      box.appendChild(g2);
+      box.appendChild(textField("Bajada corta (excerpt)", p, "excerpt", { area: true }));
+      box.appendChild(textField("Descripción completa", p, "description", { area: true }));
+
+      box.appendChild(uploaderField("Foto principal", p.image, slug(p.id || p.name) + "-main",
+        (path) => { p.image = path; }, { maxDim: 1800 }));
+
+      // galería
+      box.appendChild(el("label", { text: "Galería (ventana ampliada)" }));
+      p.gallery.forEach((shot, gi) => {
+        const gb = el("div", { class: "item", style: "background:var(--bg)" });
+        const sel = el("select", { onchange: (e) => { shot.type = e.target.value; markDirty(); renderAll(); } });
+        ["tall", "duo"].forEach((o) => {
+          const opt = el("option", { value: o, text: o === "tall" ? "1 foto (ancha)" : "2 fotos (par)" });
+          if (shot.type === o) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        gb.appendChild(el("div", { class: "item__head" }, [
+          sel,
+          el("div", { class: "row-btns" }, [
+            el("button", { class: "btn btn--sm", type: "button", text: "▲", onclick: () => move(p.gallery, gi, -1) }),
+            el("button", { class: "btn btn--sm", type: "button", text: "▼", onclick: () => move(p.gallery, gi, 1) }),
+            el("button", { class: "btn btn--sm btn--danger", type: "button", text: "✕", onclick: () => { p.gallery.splice(gi,1); markDirty(); renderAll(); } }),
+          ]),
+        ]));
+        gb.appendChild(uploaderField("Foto" + (shot.type === "duo" ? " izquierda" : ""), shot.src,
+          slug(p.id) + "-g" + gi + "a", (path) => { shot.src = path; }));
+        if (shot.type === "duo") {
+          gb.appendChild(uploaderField("Foto derecha", shot.src2,
+            slug(p.id) + "-g" + gi + "b", (path) => { shot.src2 = path; }));
+        }
+        box.appendChild(gb);
+      });
+      box.appendChild(el("button", { class: "btn btn--sm", type: "button", text: "+ Agregar bloque de galería",
+        onclick: () => { p.gallery.push({ type: "tall", src: "", src2: "" }); markDirty(); renderAll(); } }));
+
+      sec.appendChild(box);
+    });
+
+    sec.appendChild(el("button", { class: "btn btn--primary", type: "button", text: "+ Agregar proyecto",
+      onclick: () => {
+        const id = "proyecto-" + Date.now().toString(36);
+        state.projects.push({ id, name: "Nuevo proyecto", location: "", type: "", year: "", area: "",
+          excerpt: "", description: "", hidden: true, image: "", gallery: [] });
+        markDirty(); renderAll();
+      } }));
+  }
+
+  function renderRecorrido(sec) {
+    sec.appendChild(el("h2", { text: "Fotos del recorrido cinematográfico" }));
+    sec.appendChild(el("p", { class: "intro muted", text: "Las 4 imágenes de la casa que se recorren al hacer scroll al inicio." }));
+    const box = el("div", { class: "item" });
+    [["fachada", "Fachada / exterior"], ["living", "Living"], ["cocina", "Cocina"], ["patio", "Patio"]].forEach(([key, lbl]) => {
+      box.appendChild(uploaderField(lbl, state.film[key], "recorrido-" + key,
+        (path) => { state.film[key] = path; }, { maxDim: 2200 }));
+    });
+    sec.appendChild(box);
+  }
+
+  /* ---------------- Publish ---------------- */
+  $("#publishBtn").addEventListener("click", async () => {
+    const btn = $("#publishBtn");
+    btn.disabled = true; setStatus("Publicando…", "");
+    try {
+      const images = pendingImages.map((i) => ({ path: i.path, dataBase64: i.dataBase64 }));
+      const res = await api({ action: "publish", content: state, images });
+      pendingImages = []; dirty = false;
+      setStatus("Publicado ✓ (" + res.commit + ")", "ok");
+      toast("Publicado. El sitio se actualiza en ~1 minuto.");
+    } catch (err) {
+      setStatus("Error al publicar", "err");
+      toast("No se pudo publicar: " + err.message);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $("#reloadBtn").addEventListener("click", () => {
+    if (dirty && !confirm("Vas a descartar los cambios sin publicar. ¿Seguir?")) return;
+    dirty = false; location.reload();
+  });
+})();
+</script>
+</body>
+</html>
