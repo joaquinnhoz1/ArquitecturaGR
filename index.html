@@ -61,10 +61,11 @@
 <section class="film" id="film" data-screen-label="Recorrido">
   <div class="film__pin" id="estudio">
     <div class="film__stage">
-      <div class="film__layer" data-shot="fachada"><img class="scene-img" src="uploads/fachada.png" alt="Fachada principal de la residencia al atardecer" /></div>
-      <div class="film__layer" data-shot="living"><img class="scene-img" src="uploads/living.png" alt="Living de doble altura con grandes ventanales" /></div>
-      <div class="film__layer" data-shot="cocina"><img class="scene-img" src="uploads/cocina.png" alt="Cocina con isla de mármol y salida al jardín" /></div>
-      <div class="film__layer" data-shot="patio"><img class="scene-img" src="uploads/patio.png" alt="Patio con piscina y estar exterior al atardecer" /></div>
+      <video class="film__video" id="filmVideo" muted playsinline webkit-playsinline preload="auto"
+             poster="uploads/recorrido/hero-poster.webp"
+             aria-label="Recorrido cinematográfico: fachada, living, cocina y patio">
+        <source src="uploads/recorrido/hero.mp4" type="video/mp4" />
+      </video>
     </div>
     <div class="film__scrim"></div>
     <div class="film__frame"></div>

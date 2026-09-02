@@ -68,10 +68,8 @@
     "handle": "@arq.estudio.gr"
   },
   "film": {
-    "fachada": "uploads/fachada.png",
-    "living": "uploads/living.png",
-    "cocina": "uploads/cocina.png",
-    "patio": "uploads/patio.png"
+    "video": "uploads/recorrido/hero.mp4",
+    "poster": "uploads/recorrido/hero-poster.webp"
   },
   "servicios": [
     {

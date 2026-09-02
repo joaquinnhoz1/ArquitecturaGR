@@ -460,6 +460,14 @@ image-slot::part(ring) {
   background: #0d0b08;
 }
 .film__stage { position: absolute; inset: 0; }
+/* fondo del recorrido: video cinematográfico scrubbeado por scroll
+   (reemplaza el stack de 4 imágenes; misma composición full-bleed) */
+.film__video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+  display: block; background: #0d0b08;
+}
 .film__layer {
   position: absolute;
   inset: 0;

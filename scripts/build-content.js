@@ -3,12 +3,21 @@
    ---------------------------------------------------------------------------
    - Extrae cada imagen base64 a uploads/portfolio/<slug>.webp
    - Genera content.json (fuente única de contenido editable del sitio)
-   Uso:  node scripts/build-content.js
+   Uso:  node scripts/build-content.js [--force]
+
+   ⚠️  Ya se corrió. content.json ahora se edita desde el panel /admin.
+       Volver a correrlo SIN --force está bloqueado para no pisar esos cambios.
    =========================================================================== */
 const fs = require("fs");
 const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
+
+if (fs.existsSync(path.join(ROOT, "content.json")) && !process.argv.includes("--force")) {
+  console.error("content.json ya existe. Se edita desde /admin.\n" +
+    "Si REALMENTE querés regenerarlo desde data.js, corré: node scripts/build-content.js --force");
+  process.exit(1);
+}
 const OUT_DIR = path.join(ROOT, "uploads", "portfolio");
 fs.mkdirSync(OUT_DIR, { recursive: true });
 
@@ -135,10 +144,9 @@ const content = {
     handle: "@arq.estudio.gr",
   },
   film: {
-    fachada: "uploads/fachada.png",
-    living: "uploads/living.png",
-    cocina: "uploads/cocina.png",
-    patio: "uploads/patio.png",
+    // Fondo del recorrido: video cinematográfico scrubbeado por scroll.
+    video: "uploads/recorrido/hero.mp4",
+    poster: "uploads/recorrido/hero-poster.webp",
   },
   servicios: window.SERVICIOS || [],
   metodo: window.METODO || [],

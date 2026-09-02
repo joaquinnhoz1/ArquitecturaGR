@@ -112,12 +112,15 @@
     if (ct.handle) setText('.footer__col:last-child > p:last-child', ct.handle);
 
     const f = c.film || {};
-    const fm = { fachada: f.fachada, living: f.living, cocina: f.cocina, patio: f.patio };
-    $$(".film__layer").forEach((l) => {
-      const src = fm[l.dataset.shot];
-      const img = l.querySelector(".scene-img");
-      if (src && img && img.getAttribute("src") !== src) img.setAttribute("src", src);
-    });
+    const vid = $(".film__video");
+    if (vid) {
+      if (f.poster && vid.getAttribute("poster") !== f.poster) vid.setAttribute("poster", f.poster);
+      const srcEl = vid.querySelector("source");
+      if (f.video && srcEl && srcEl.getAttribute("src") !== f.video) {
+        srcEl.setAttribute("src", f.video);
+        vid.load();
+      }
+    }
   }
 
   /* ---------------------------------------------------------------------- *
@@ -242,29 +245,81 @@
   const filmEl = $("#film");
 
   // referencias del film
-  const filmLayers = {};
-  const filmLayerEls = {};
-  $$(".film__layer", filmEl).forEach((l) => {
-    filmLayers[l.dataset.shot] = l.querySelector(".scene-img");
-    filmLayerEls[l.dataset.shot] = l;
-  });
   const filmCaps = {};
   $$(".film__cap", filmEl).forEach((c) => (filmCaps[c.dataset.cap] = c));
   const filmTag = filmEl ? filmEl.querySelector(".film__tag") : null;
   const filmCue = filmEl ? filmEl.querySelector(".film__scrollcue") : null;
-  const motionDamp = prefersReduced ? 0.4 : 1;
 
   const ramp = (P, a, b) => clamp((P - a) / (b - a), 0, 1);
   const smooth = (t) => t * t * (3 - 2 * t);
 
-  function setImg(img, scale, x) {
-    if (!img) return;
-    img.style.transform = `translate3d(${x}%, 0, 0) scale(${scale})`;
-  }
   function setCap(cap, opacity, tyMul) {
     if (!cap) return;
     cap.style.opacity = clamp(opacity, 0, 1).toFixed(3);
     cap.style.transform = `translateY(${(tyMul * 26).toFixed(1)}px)`;
+  }
+
+  /* ---- Video del recorrido (fondo scrubbeado por scroll) ----------------
+   * Reemplaza el crossfade de 4 imágenes. El progreso de scroll por #film
+   * (P: 0→1, FACHADA→LIVING→COCINA→PATIO) controla video.currentTime.
+   * - Desktop / puntero fino  → "scrub": el video avanza y retrocede con el scroll.
+   * - Táctil / mobile         → "loop": autoplay + loop (el scrubbing por scroll
+   *                              no es confiable en muchos navegadores móviles).
+   * - prefers-reduced-motion  → "still": primer fotograma fijo (poster).
+   */
+  const filmVideo = filmEl ? filmEl.querySelector(".film__video") : null;
+  let filmMode = "scrub";
+  let filmVideoReady = false;
+  let filmTargetT = 0;
+  let filmScrubRaf = 0;
+
+  function filmVideoInit() {
+    if (!filmVideo) return;
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
+    filmMode = prefersReduced ? "still" : (coarse ? "loop" : "scrub");
+
+    const onReady = () => { filmVideoReady = true; };
+    filmVideo.addEventListener("loadedmetadata", onReady);
+    filmVideo.addEventListener("loadeddata", onReady);
+    filmVideo.addEventListener("canplay", onReady);
+    if (filmVideo.readyState >= 1) filmVideoReady = true;
+
+    if (filmMode === "loop") {
+      filmVideo.loop = true;
+      const playSafe = () => filmVideo.play().catch(() => { filmMode = "still"; });
+      playSafe();
+      // pausar cuando el recorrido no está en pantalla (batería / CPU en mobile)
+      if ("IntersectionObserver" in window) {
+        new IntersectionObserver((ents) => {
+          ents.forEach((en) => {
+            if (filmMode !== "loop") return;
+            if (en.isIntersecting) playSafe();
+            else filmVideo.pause();
+          });
+        }, { threshold: 0.01 }).observe(filmEl.querySelector(".film__pin") || filmEl);
+      }
+    } else if (filmMode === "scrub") {
+      // "primar" el decoder: algunos navegadores no permiten seek en un
+      // video que nunca se reprodujo. play()→pause() inmediato (está muted).
+      const prime = filmVideo.play();
+      if (prime && prime.then) prime.then(() => filmVideo.pause()).catch(() => {});
+      else { try { filmVideo.pause(); } catch (e) {} }
+      try { filmVideo.currentTime = 0; } catch (e) {}
+    }
+  }
+
+  function filmScrubTick() {
+    filmScrubRaf = 0;
+    if (!filmVideo || filmMode !== "scrub" || !filmVideoReady) return;
+    const dur = filmVideo.duration || 10;
+    const cur = filmVideo.currentTime;
+    const diff = filmTargetT - cur;
+    if (Math.abs(diff) < 0.02) return;
+    if (!filmVideo.seeking) {
+      const step = cur + diff * 0.18;               // lerp → transición fluida
+      try { filmVideo.currentTime = clamp(step, 0, dur - 0.05); } catch (e) {}
+    }
+    filmScrubRaf = requestAnimationFrame(filmScrubTick);
   }
 
   function updateFilm() {
@@ -274,24 +329,13 @@
     const P = clamp(-top / (range > 0 ? range : 1), 0, 1);
     filmEl.style.setProperty("--P", P.toFixed(4));
 
-    // crossfades (trapezoides solapados → una sola toma continua)
-    const inLiving = smooth(ramp(P, 0.17, 0.31));
-    const inCocina = smooth(ramp(P, 0.45, 0.59));
-    const inPatio  = smooth(ramp(P, 0.69, 0.82));
-    const op = {
-      fachada: 1 - inLiving,
-      living: inLiving - inCocina,
-      cocina: inCocina - inPatio,
-      patio: inPatio,
-    };
-    for (const k in filmLayerEls) filmLayerEls[k].style.opacity = clamp(op[k], 0, 1).toFixed(3);
-
-    // dolly continuo de cámara (empuje hacia adelante por la casa)
-    const d = motionDamp;
-    setImg(filmLayers.fachada, 1.05 + P * 2.6 * d, 0);                          // atraviesa el vidrio
-    setImg(filmLayers.living,  1.08 + P * 0.85 * d, 0);                         // avanza por el interior
-    setImg(filmLayers.cocina,  1.06 + P * 0.95 * d, -ramp(P, 0.55, 0.84) * 4 * d); // deriva hacia las aberturas
-    setImg(filmLayers.patio,   1.26 - smooth(ramp(P, 0.69, 1)) * 0.2 * d, 0);   // llega y respira
+    // fondo: el progreso de scroll (P) mueve el tiempo del video
+    // FACHADA(0) → LIVING → COCINA → PATIO(1). El seek real lo suaviza filmScrubTick().
+    if (filmVideo && filmMode === "scrub") {
+      const dur = filmVideo.duration || 10;
+      filmTargetT = clamp(P, 0, 1) * (dur - 0.06);
+      if (!filmScrubRaf) filmScrubRaf = requestAnimationFrame(filmScrubTick);
+    }
 
     // capítulos
     setCap(filmCaps.hero,    1 - smooth(ramp(P, 0.07, 0.15)), 0);
@@ -539,6 +583,7 @@
     const yr = $("#year"); if (yr) yr.textContent = new Date().getFullYear();
     await loadContent();
     applyContent();
+    filmVideoInit();
     renderServicios();
     renderSteps();
     renderChips();
