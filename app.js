@@ -45,11 +45,17 @@
     box.innerHTML = window.CHIPS.map((c) => `<span class="chip" data-on="false" role="checkbox" aria-checked="false">${c}</span>`).join("");
   }
 
+  // Proyectos visibles = los que no están ocultos (p.ej. sin fotos todavía).
+  function visibleProjects() {
+    return (window.PROJECTS || []).filter((p) => !p.hidden);
+  }
+
   function renderFolio() {
     const folio = $("#folio");
     if (!folio || !window.PROJECTS) return;
-    const total = window.PROJECTS.length;
-    folio.innerHTML = window.PROJECTS.map((p, i) => `
+    const list = visibleProjects();
+    const total = list.length;
+    folio.innerHTML = list.map((p, i) => `
       <article class="proj reveal" data-proj="${p.id}" data-scene data-screen-label="Proyecto ${i + 1}">
         <div class="proj__media">
           <div class="proj__img ph">
@@ -303,10 +309,11 @@
   }
 
   function openLightbox(id) {
-    const idx = window.PROJECTS.findIndex((p) => p.id === id);
+    const list = visibleProjects();
+    const idx = list.findIndex((p) => p.id === id);
     if (idx < 0) return;
     currentIdx = idx;
-    buildLightbox(window.PROJECTS[idx]);
+    buildLightbox(list[idx]);
     lb.dataset.open = "true";
     lb.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
@@ -320,8 +327,9 @@
   }
   function navLightbox(dir) {
     if (currentIdx < 0) return;
-    const n = (currentIdx + dir + window.PROJECTS.length) % window.PROJECTS.length;
-    openLightbox(window.PROJECTS[n].id);
+    const list = visibleProjects();
+    const n = (currentIdx + dir + list.length) % list.length;
+    openLightbox(list[n].id);
   }
 
   function initLightbox() {

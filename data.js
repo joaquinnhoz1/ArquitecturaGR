@@ -112,6 +112,7 @@ window.PROJECTS = [
     excerpt: "Una casa que celebra el estilo clásico-neoclásico: galería amplia, jardín, pileta y gran ambiente integrado.",
     description: "La Casa IH expresa la voluntad de un cliente que eligió la elegancia clásica en un contexto contemporáneo. Una galería amplia y soleada, abierta al jardín y a la pileta, actúa como nexo entre el exterior y el interior social-familiar.",
     gallery: ["tall", "duo", "tall"],
+    hidden: true, // sin fotos todavía — no se muestra en el portfolio
   },
   {
     id: "casa-daireaux",
@@ -145,5 +146,6 @@ window.PROJECTS = [
     excerpt: "El estudio de vistas, transparencias, luces y sombras fue el punto de partida: una vivienda que trabaja con la naturaleza.",
     description: "Las amplias vistas que ofrece el paisaje rural hicieron imprescindible pensar este proyecto desde el análisis profundo del entorno: orientaciones, asoleamiento, vientos predominantes y características visuales. El resultado es una vivienda que maximiza el confort natural y vive en consonancia con su contexto.",
     gallery: ["tall", "duo"],
+    hidden: true, // sin fotos todavía — no se muestra en el portfolio
   },
 ];
