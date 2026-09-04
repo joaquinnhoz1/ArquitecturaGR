@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="presentation.css" />
 </head>
 <body>
 
@@ -40,6 +41,7 @@
   <div class="menu__foot">
     <span>Instagram</span><span>Facebook</span><span>WhatsApp</span>
   </div>
+  <button type="button" class="present-trigger" data-present style="margin-top:1.4rem">Modo presentación</button>
 </div>
 
 <!-- ===================== SIDE PROGRESS ===================== -->
@@ -291,6 +293,7 @@
     </div>
     <div class="footer__bar">
       <span>© <span id="year"></span> Estudio GR. Todos los derechos reservados.</span>
+      <button type="button" class="present-trigger" data-present>Modo presentación</button>
       <span>Daireaux, Buenos Aires</span>
     </div>
   </div>
@@ -309,6 +312,7 @@
 <!-- ============================ SCRIPTS ============================ -->
 <script src="data.js"></script>
 <script src="app.js"></script>
+<script src="presentation.js" defer></script>
 
 </body>
 </html>
